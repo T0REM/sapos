@@ -5,9 +5,9 @@
 A custom x86_64 operating system kernel, written from scratch in C.
 
 <p>
-  <img src="https://img.shields.io/github/downloads/YOUR_USERNAME/sap-os/total?style=for-the-badge&logo=github&label=downloads&color=2b9348" alt="Downloads">
+  <img src="https://img.shields.io/github/downloads/t0rem/sapos/total?style=for-the-badge&logo=github&label=downloads&color=2b9348" alt="Downloads">
   <img src="https://img.shields.io/badge/platform-x86__64-1e6fb8?style=for-the-badge&logo=qemu&logoColor=white" alt="Platform">
-  <img src="https://img.shields.io/github/license/YOUR_USERNAME/sap-os?style=for-the-badge&color=e07b00" alt="License">
+  <img src="https://img.shields.io/github/license/t0rem/sapos?style=for-the-badge&color=e07b00" alt="License">
 </p>
 
 Not based on Linux. Its own thing, built phase by phase as a learning project.
