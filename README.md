@@ -15,3 +15,13 @@ Developed on WSL2 (Ubuntu). Needs clang, lld, nasm, xorriso, qemu, make.
     make run    # boot it in QEMU
 
 See docs/ARCHITECTURE.md for the design.
+
+
+## Notes
+
+Sap OS is built with AI assistance (Claude) used as a learning tool. My original
+goal was to do this to improve my knowledge in systems and low level programming.
+Every subsystem is reviewed, debugged, and understood rather than blindly
+generated. The AI plans and pair programs, leaving me to drive, test, and learn
+how each piece actually works. Theres no point in me trying to claim credit for this,
+its just to learn and understand.
