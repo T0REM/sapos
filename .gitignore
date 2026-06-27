@@ -1,0 +1,8 @@
+# Build outputs
+/build/
+/sapos.iso
+
+# Vendored / downloaded by `make` (re-fetched on demand)
+/limine/
+/kernel/limine.h
+/limine-binary.tar.gz
