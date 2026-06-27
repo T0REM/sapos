@@ -16,7 +16,18 @@ Developed on WSL2 (Ubuntu). Needs clang, lld, nasm, xorriso, qemu, make.
 
 See docs/ARCHITECTURE.md for the design.
 
+## Milestones
 
+**It's actually becoming a computer!**
+
+Sap OS boots on its own page tables, manages memory through a full four layer
+allocator, this is physical frames, paging, a buddy allocator, and a slab allocator with
+kmalloc, kfree. It handles timer and keyboard interrupts, and renders text to its
+own framebuffer console. You can type into it and watch the characters appear on
+screen, with backspace and scrolling. Four phases of low level systems work, all written
+from scratch in C.
+
+![Sap OS booting and echoing keyboard input](screenshots/qemu-window.png)
 ## Notes
 
 Sap OS is built with AI assistance (Claude) used as a learning tool. My original
