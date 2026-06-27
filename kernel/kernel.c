@@ -23,6 +23,7 @@
 #include "arch/x86_64/arch.h"
 #include "drivers/timer.h"
 #include "drivers/keyboard.h"
+#include "core/mm/pmm.h"
 
 /* --- Limine request block -------------------------------------------------
  *
@@ -47,6 +48,23 @@ static volatile struct limine_framebuffer_request framebuffer_request = {
     .revision = 0,
 };
 
+/* Ask for the physical memory map: which RAM ranges exist and what each is for
+ * (usable, reserved, ACPI, kernel, ...). The frame allocator is built from this. */
+__attribute__((used, section(".limine_requests")))
+static volatile struct limine_memmap_request memmap_request = {
+    .id = LIMINE_MEMMAP_REQUEST_ID,
+    .revision = 0,
+};
+
+/* Ask for the HHDM (higher-half direct map) offset. Limine maps all physical RAM
+ * at virtual address (phys + offset), which is how we get a writable pointer to
+ * the bitmap, whose backing store we only know by physical address. */
+__attribute__((used, section(".limine_requests")))
+static volatile struct limine_hhdm_request hhdm_request = {
+    .id = LIMINE_HHDM_REQUEST_ID,
+    .revision = 0,
+};
+
 /* Markers bracketing the request area for the bootloader's scanner. */
 __attribute__((used, section(".limine_requests_start_marker")))
 static volatile uint64_t limine_requests_start[4] = LIMINE_REQUESTS_START_MARKER;
@@ -64,6 +82,33 @@ static __attribute__((noreturn)) void hcf(void) {
     for (;;) {
         __asm__ volatile ("hlt");
     }
+}
+
+/* --- Tiny serial number formatters ---------------------------------------
+ *
+ * Still no kprintf (that waits on the heap, Phase 3's later steps). These two
+ * locals are all the memory summary and self-test need. */
+
+/* Print an unsigned value in decimal. */
+static void put_dec(uint64_t v) {
+    if (v == 0) { serial_putc('0'); return; }
+    char buf[20];
+    int i = 0;
+    while (v > 0) { buf[i++] = (char)('0' + (v % 10)); v /= 10; }
+    while (i-- > 0) { serial_putc(buf[i]); }
+}
+
+/* Print a value as 0x-prefixed hex (handy for raw physical addresses). */
+static void put_hex(uint64_t v) {
+    serial_write("0x");
+    char buf[16];
+    int i = 0;
+    do {
+        uint8_t nib = v & 0xF;
+        buf[i++] = (char)(nib < 10 ? '0' + nib : 'a' + (nib - 10));
+        v >>= 4;
+    } while (v > 0);
+    while (i-- > 0) { serial_putc(buf[i]); }
 }
 
 /* --- Entry point ---------------------------------------------------------- */
@@ -117,7 +162,32 @@ void kmain(void) {
     keyboard_init();   /* PS/2 keyboard            -> IRQ1 echoes keypresses  */
     serial_write("Sap OS: timer + keyboard handlers installed\n");
 
-    /* Now go live: unmask IRQ0/IRQ1 and `sti`. Strictly after the handlers are
+    /* Bring up the physical frame allocator (Phase 3, step 3a). We do this while
+     * interrupts are still masked so the summary and self-test below print as one
+     * clean block, without the timer heartbeat interleaving. Bail loudly if the
+     * bootloader withheld either response we depend on. */
+    if (memmap_request.response == NULL) {
+        serial_write("error: no memory map provided\n");
+        hcf();
+    }
+    if (hhdm_request.response == NULL) {
+        serial_write("error: no HHDM offset provided\n");
+        hcf();
+    }
+    pmm_init(memmap_request.response, hhdm_request.response->offset);
+
+    /* Memory summary. usable frames * 4 KiB / 1 MiB gives MiB of usable RAM. */
+    uint64_t total, used, free;
+    pmm_get_stats(&total, &used, &free);
+    serial_write("Sap OS: pmm up — usable ");
+    put_dec(total * PMM_FRAME_SIZE / (1024 * 1024));
+    serial_write(" MiB (");
+    put_dec(total);
+    serial_write(" frames), free ");
+    put_dec(free);
+    serial_write(" frames\n");
+
+        /* Now go live: unmask IRQ0/IRQ1 and `sti`. Strictly after the handlers are
      * in place (see above), so the first interrupt lands somewhere real. */
     arch_enable_irqs();
     serial_write("Sap OS: interrupts enabled — idling, type to echo\n");
