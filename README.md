@@ -3,6 +3,7 @@
 # Sap OS
 
 A custom x86_64 operating system kernel, written from scratch in C.
+Under heavy development. No releases will be made for a while.
 
 <p>
   <img src="https://img.shields.io/github/downloads/T0REM/sapos/total?style=for-the-badge&logo=github&label=downloads&color=2b9348" alt="Downloads">
