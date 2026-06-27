@@ -5,9 +5,9 @@
 A custom x86_64 operating system kernel, written from scratch in C.
 
 <p>
-  <img src="https://img.shields.io/github/downloads/t0rem/sapos/total?style=for-the-badge&logo=github&label=downloads&color=2b9348" alt="Downloads">
+  <img src="https://img.shields.io/github/downloads/T0REM/sapos/total?style=for-the-badge&logo=github&label=downloads&color=2b9348" alt="Downloads">
   <img src="https://img.shields.io/badge/platform-x86__64-1e6fb8?style=for-the-badge&logo=qemu&logoColor=white" alt="Platform">
-  <img src="https://img.shields.io/github/license/t0rem/sapos?style=for-the-badge&color=e07b00" alt="License">
+  <img src="https://img.shields.io/github/license/T0REM/sapos?style=for-the-badge&color=e07b00" alt="License">
 </p>
 
 Not based on Linux. Its own thing, built phase by phase as a learning project.
@@ -22,7 +22,7 @@ Not based on Linux. Its own thing, built phase by phase as a learning project.
 
 ## What it is
 
-Sap OS is a from scratch x86_64 monolithic kernel written in C. It boots on its own page tables, manages its own memory, handles interrupts, and renders text to its own framebuffer console. No Linux underneath, no training wheels. Every subsystem is built, broken, and understood one phase at a time.
+Sap OS is a from scratch x86_64 monolithic kernel written in C. It boots on its own page tables, manages its own memory, handles interrupts, and renders text to its own framebuffer console. No Linux underneath. Every subsystem is built, broken, and understood one phase at a time.
 
 ## Status
 
