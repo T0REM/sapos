@@ -111,8 +111,9 @@ static void put_dec(uint64_t v) {
     while (i-- > 0) { serial_putc(buf[i]); }
 }
 
-/* Print a value as 0x-prefixed hex (handy for raw physical addresses). */
-static void put_hex(uint64_t v) {
+/* Print a value as 0x-prefixed hex (handy for raw physical addresses). Marked
+ * unused for now — kept for upcoming slab-allocator debugging. */
+static __attribute__((unused)) void put_hex(uint64_t v) {
     serial_write("0x");
     char buf[16];
     int i = 0;
@@ -146,52 +147,6 @@ static void print_buddy_stats(const char *label) {
     serial_write("    total free: ");
     put_dec(total / (1024 * 1024));
     serial_write(" MiB\n");
-}
-
-/* True if the buddy free-list counts currently match the snapshot `base`. Used
- * by the self-test to prove a merge chain restored the allocator exactly. */
-static bool buddy_matches(const uint64_t *base) {
-    uint64_t counts[BUDDY_MAX_ORDER + 1];
-    buddy_get_stats(counts, NULL);
-    for (unsigned o = 0; o <= BUDDY_MAX_ORDER; o++) {
-        if (counts[o] != base[o]) {
-            return false;
-        }
-    }
-    return true;
-}
-
-/* Self-test scratch: blocks set aside by drain_orders() so the boot-time
- * fragmentation can't satisfy a test alloc without forcing a real split. */
-#define HOLD_MAX 512
-static uint64_t hold_phys[HOLD_MAX];
-static unsigned hold_ord[HOLD_MAX];
-static unsigned hold_n;
-
-/* Pull every free block on orders [lo, hi] off the free lists and remember it.
- * Each alloc here pops directly (we only call it while that order is non-empty),
- * so draining never itself splits — it just empties those orders so a subsequent
- * alloc is forced to split a larger block. */
-static void drain_orders(unsigned lo, unsigned hi) {
-    hold_n = 0;
-    for (unsigned o = lo; o <= hi; o++) {
-        uint64_t counts[BUDDY_MAX_ORDER + 1];
-        buddy_get_stats(counts, NULL);
-        while (counts[o] > 0 && hold_n < HOLD_MAX) {
-            hold_phys[hold_n] = buddy_alloc(o);
-            hold_ord[hold_n] = o;
-            hold_n++;
-            buddy_get_stats(counts, NULL);
-        }
-    }
-}
-
-/* Give back everything drain_orders() set aside, at the same orders. */
-static void release_held(void) {
-    for (unsigned i = 0; i < hold_n; i++) {
-        buddy_free(hold_phys[i], hold_ord[i]);
-    }
-    hold_n = 0;
 }
 
 /* --- Entry point ---------------------------------------------------------- */
