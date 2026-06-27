@@ -9,6 +9,7 @@
 #include <stdint.h>
 #include "isr.h"
 #include "idt.h"
+#include "paging.h"        /* paging_read_cr2 — the faulting address on a #PF */
 #include "lib/serial.h"
 
 /* The 32 stub addresses exported by isr.asm, for wiring the IDT. */
@@ -110,13 +111,34 @@ void isr_handler(struct interrupt_frame *f) {
     dump_pair("rfl", f->rflags, "ss ", f->ss);
 
     /* For a page fault the faulting address lives in CR2, not in any saved
-     * register, so read it specially. (Reading a control register is x86, so it
-     * belongs here in the arch layer.) */
+     * register, so read it specially, and decode the error code's bits. This is
+     * our primary debugging tool for the whole memory phase: it turns what would
+     * be a silent triple fault into a readable report of what access faulted,
+     * where, and why. (Reading CR2 is x86, so the primitive lives in paging.c.)
+     *
+     * #PF error-code bits (Intel SDM):
+     *   0 P   0 = page not present       1 = protection violation
+     *   1 W   0 = read                    1 = write
+     *   2 U   0 = supervisor (ring 0)     1 = user (ring 3)
+     *   3 R   1 = reserved bit set in a paging-structure entry
+     *   4 I   1 = instruction fetch */
     if (f->vector == 14) {
-        uint64_t cr2;
-        __asm__ volatile ("mov %%cr2, %0" : "=r"(cr2));
+        uint64_t cr2 = paging_read_cr2();
+        uint64_t ec  = f->error_code;
+
+        serial_write("  -- page fault --\n");
         serial_write("  cr2 (faulting addr) ");
         put_hex64(cr2);
+        serial_write("\n");
+        serial_write("  cause: ");
+        serial_write((ec & (1u << 0)) ? "protection-violation"
+                                      : "page-not-present");
+        serial_write(", ");
+        serial_write((ec & (1u << 1)) ? "write" : "read");
+        serial_write(", ");
+        serial_write((ec & (1u << 2)) ? "user" : "supervisor");
+        if (ec & (1u << 3)) { serial_write(", reserved-bit-set"); }
+        if (ec & (1u << 4)) { serial_write(", instruction-fetch"); }
         serial_write("\n");
     }
 

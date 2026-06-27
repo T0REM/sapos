@@ -88,9 +88,11 @@ SRCS := \
     kernel/arch/x86_64/irq.c \
     kernel/arch/x86_64/pic.c \
     kernel/arch/x86_64/arch.c \
+    kernel/arch/x86_64/paging.c \
     kernel/drivers/timer.c \
     kernel/drivers/keyboard.c \
-    kernel/core/mm/pmm.c
+    kernel/core/mm/pmm.c \
+    kernel/core/mm/vmm.c
 
 # Standalone assembly sources (NASM). Named *_stubs to avoid colliding with the
 # C object of the same stem (isr.c -> isr.o).

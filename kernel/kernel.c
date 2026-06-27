@@ -24,6 +24,7 @@
 #include "drivers/timer.h"
 #include "drivers/keyboard.h"
 #include "core/mm/pmm.h"
+#include "core/mm/vmm.h"
 
 /* --- Limine request block -------------------------------------------------
  *
@@ -62,6 +63,17 @@ static volatile struct limine_memmap_request memmap_request = {
 __attribute__((used, section(".limine_requests")))
 static volatile struct limine_hhdm_request hhdm_request = {
     .id = LIMINE_HHDM_REQUEST_ID,
+    .revision = 0,
+};
+
+/* Ask where Limine loaded our kernel: the physical and virtual base of the
+ * image. The VMM needs both to map the kernel into its own page tables — for
+ * each kernel virtual page V, the backing frame is V - virtual_base +
+ * physical_base. Without this we couldn't keep the executing code mapped across
+ * the cr3 switch. */
+__attribute__((used, section(".limine_requests")))
+static volatile struct limine_executable_address_request executable_address_request = {
+    .id = LIMINE_EXECUTABLE_ADDRESS_REQUEST_ID,
     .revision = 0,
 };
 
@@ -187,7 +199,19 @@ void kmain(void) {
     put_dec(free);
     serial_write(" frames\n");
 
-        /* Now go live: unmask IRQ0/IRQ1 and `sti`. Strictly after the handlers are
+    /* Phase 3b: build our own page tables and switch onto them. We need the
+     * kernel-address response (where Limine put the image) to map the kernel.
+     * Still interrupts-masked here, so the cr3 switch happens with nothing able
+     * to fire mid-flight. */
+    if (executable_address_request.response == NULL) {
+        serial_write("error: no kernel-address info provided\n");
+        hcf();
+    }
+    vmm_init(executable_address_request.response,
+             memmap_request.response,
+             hhdm_request.response->offset);
+
+     /* Now go live: unmask IRQ0/IRQ1 and `sti`. Strictly after the handlers are
      * in place (see above), so the first interrupt lands somewhere real. */
     arch_enable_irqs();
     serial_write("Sap OS: interrupts enabled — idling, type to echo\n");

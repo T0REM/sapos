@@ -27,6 +27,16 @@ SECTIONS
     /* Higher-half base. Everything below is laid out from here upward. */
     . = 0xffffffff80000000;
 
+    /* Symbols the VMM reads to map the kernel image into its own page tables
+     * (Phase 3b). They are PLAIN virtual addresses the linker resolves; the VMM
+     * converts each to a physical address via Limine's executable-address
+     * response (phys = virt - virtual_base + physical_base). The boundary is
+     * __data_start: everything below it (requests, text, rodata) is mapped
+     * read-only, everything from it up (data, bss) read-write. This base is
+     * 4 KiB-aligned, and every section start below is page-aligned too, so the
+     * VMM can map whole pages with no partial-page edge cases. */
+    __kernel_start = .;
+
     /* The Limine request structures. The start/end markers bracket the area
      * the bootloader scans, with the actual requests in between. KEEP() stops
      * --gc-sections from discarding them since nothing in our code "uses" them
@@ -53,6 +63,13 @@ SECTIONS
 
     . = ALIGN(CONSTANT(MAXPAGESIZE));
 
+    /* Start of the writable half of the image. The VMM maps [__data_start,
+     * __kernel_end) with the writable bit set, and everything before it without
+     * it — giving the kernel's code and constants W-protection (the meaningful
+     * half of W^X) without needing the NX bit, which would require enabling
+     * EFER.NXE first or risk a reserved-bit fault on the cr3 switch. */
+    __data_start = .;
+
     .data : {
         *(.data .data.*)
     } :data
@@ -64,6 +81,11 @@ SECTIONS
         *(.bss .bss.*)
         *(COMMON)
     } :data
+
+    /* One past the end of the kernel image, page-aligned so the VMM's map loop
+     * covers every page that holds kernel code or data. */
+    . = ALIGN(CONSTANT(MAXPAGESIZE));
+    __kernel_end = .;
 
     /* Drop sections that are useless to a freestanding kernel and that some
      * toolchains emit anyway. .eh_frame is C++ unwinding metadata; .note.*
