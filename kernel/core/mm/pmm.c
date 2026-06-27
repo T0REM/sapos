@@ -156,6 +156,18 @@ void pmm_free_frame(uint64_t phys) {
     }
 }
 
+bool pmm_claim_frame(uint64_t phys) {
+    uint64_t i = phys / PMM_FRAME_SIZE;
+
+    /* Out of the bitmap's span, or already used: nothing to claim. */
+    if (i >= total_frames || bit_test(i)) {
+        return false;
+    }
+    bit_set(i);
+    free_frames--;
+    return true;
+}
+
 /* --- Stats ---------------------------------------------------------------- */
 
 void pmm_get_stats(uint64_t *total, uint64_t *used, uint64_t *free) {

@@ -25,6 +25,7 @@
 #include "drivers/keyboard.h"
 #include "core/mm/pmm.h"
 #include "core/mm/vmm.h"
+#include "core/mm/buddy.h"
 
 /* --- Limine request block -------------------------------------------------
  *
@@ -123,6 +124,76 @@ static void put_hex(uint64_t v) {
     while (i-- > 0) { serial_putc(buf[i]); }
 }
 
+/* Print the buddy allocator's per-order free-list counts plus total free MiB,
+ * under a caller-supplied label. Kept here (not in buddy.c) so the core-layer
+ * allocator stays free of the serial dependency, exactly like the pmm. */
+static void print_buddy_stats(const char *label) {
+    uint64_t counts[BUDDY_MAX_ORDER + 1];
+    uint64_t total;
+    buddy_get_stats(counts, &total);
+
+    serial_write(label);
+    serial_write("\n");
+    for (unsigned o = 0; o <= BUDDY_MAX_ORDER; o++) {
+        serial_write("    order ");
+        put_dec(o);
+        serial_write(" (");
+        put_dec((PMM_FRAME_SIZE << o) / 1024);   /* KiB per block */
+        serial_write(" KiB): ");
+        put_dec(counts[o]);
+        serial_write(" free\n");
+    }
+    serial_write("    total free: ");
+    put_dec(total / (1024 * 1024));
+    serial_write(" MiB\n");
+}
+
+/* True if the buddy free-list counts currently match the snapshot `base`. Used
+ * by the self-test to prove a merge chain restored the allocator exactly. */
+static bool buddy_matches(const uint64_t *base) {
+    uint64_t counts[BUDDY_MAX_ORDER + 1];
+    buddy_get_stats(counts, NULL);
+    for (unsigned o = 0; o <= BUDDY_MAX_ORDER; o++) {
+        if (counts[o] != base[o]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+/* Self-test scratch: blocks set aside by drain_orders() so the boot-time
+ * fragmentation can't satisfy a test alloc without forcing a real split. */
+#define HOLD_MAX 512
+static uint64_t hold_phys[HOLD_MAX];
+static unsigned hold_ord[HOLD_MAX];
+static unsigned hold_n;
+
+/* Pull every free block on orders [lo, hi] off the free lists and remember it.
+ * Each alloc here pops directly (we only call it while that order is non-empty),
+ * so draining never itself splits — it just empties those orders so a subsequent
+ * alloc is forced to split a larger block. */
+static void drain_orders(unsigned lo, unsigned hi) {
+    hold_n = 0;
+    for (unsigned o = lo; o <= hi; o++) {
+        uint64_t counts[BUDDY_MAX_ORDER + 1];
+        buddy_get_stats(counts, NULL);
+        while (counts[o] > 0 && hold_n < HOLD_MAX) {
+            hold_phys[hold_n] = buddy_alloc(o);
+            hold_ord[hold_n] = o;
+            hold_n++;
+            buddy_get_stats(counts, NULL);
+        }
+    }
+}
+
+/* Give back everything drain_orders() set aside, at the same orders. */
+static void release_held(void) {
+    for (unsigned i = 0; i < hold_n; i++) {
+        buddy_free(hold_phys[i], hold_ord[i]);
+    }
+    hold_n = 0;
+}
+
 /* --- Entry point ---------------------------------------------------------- */
 
 void kmain(void) {
@@ -210,6 +281,17 @@ void kmain(void) {
     vmm_init(executable_address_request.response,
              memmap_request.response,
              hhdm_request.response->offset);
+
+    /* Phase 3c: the buddy allocator takes ownership of the bulk of usable RAM,
+     * leaving the pmm a small reserve for its ongoing single-frame role (page
+     * tables). After this, page-granularity allocation goes through the buddy;
+     * the pmm and buddy own disjoint frames (see buddy.h / buddy_init). */
+    buddy_init(memmap_request.response,
+               hhdm_request.response->offset,
+               BUDDY_PMM_RESERVE_FRAMES);
+    serial_write("Sap OS: buddy up\n");
+    print_buddy_stats("Sap OS: buddy free lists:");
+
 
      /* Now go live: unmask IRQ0/IRQ1 and `sti`. Strictly after the handlers are
      * in place (see above), so the first interrupt lands somewhere real. */

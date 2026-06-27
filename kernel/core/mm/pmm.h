@@ -14,6 +14,7 @@
 #define SAPOS_CORE_MM_PMM_H
 
 #include <stdint.h>
+#include <stdbool.h>
 #include "limine.h"
 
 /* Frame size. x86_64's base page is 4 KiB; we allocate at that granularity. */
@@ -34,6 +35,13 @@ uint64_t pmm_alloc_frame(void);
 /* Return a frame to the pool. `phys` must be a PMM_FRAME_SIZE-aligned address
  * previously handed out by pmm_alloc_frame(). */
 void pmm_free_frame(uint64_t phys);
+
+/* Claim ONE specific frame: if it is currently free, mark it used and return
+ * true; if it is already used (or out of range), return false. This is the seam
+ * the buddy allocator uses to take ownership of frames out of the pmm at init,
+ * so a frame is never owned by both allocators (see buddy.h ownership note).
+ * `phys` must be PMM_FRAME_SIZE-aligned. */
+bool pmm_claim_frame(uint64_t phys);
 
 /* Report frame accounting. Any pointer may be NULL if that figure isn't wanted.
  *   total — usable frames the allocator manages (free + used)

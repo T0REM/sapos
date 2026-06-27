@@ -92,7 +92,8 @@ SRCS := \
     kernel/drivers/timer.c \
     kernel/drivers/keyboard.c \
     kernel/core/mm/pmm.c \
-    kernel/core/mm/vmm.c
+    kernel/core/mm/vmm.c \
+    kernel/core/mm/buddy.c
 
 # Standalone assembly sources (NASM). Named *_stubs to avoid colliding with the
 # C object of the same stem (isr.c -> isr.o).
