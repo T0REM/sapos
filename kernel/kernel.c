@@ -22,6 +22,7 @@
 #include "lib/serial.h"
 #include "lib/string.h"
 #include "arch/x86_64/arch.h"
+#include "drivers/console.h"
 #include "drivers/timer.h"
 #include "drivers/keyboard.h"
 #include "core/mm/pmm.h"
@@ -126,6 +127,16 @@ static void put_hex(uint64_t v) {
     while (i-- > 0) { serial_putc(buf[i]); }
 }
 
+/* Fan a status line out to BOTH channels: serial (always, the headless/debug
+ * path) and the on-screen console. The high-level boot milestones go through
+ * here so they land on the QEMU screen too; the detailed numeric dumps below
+ * stay serial-only to keep the screen log readable. console_write() is a no-op
+ * until console_init() runs, so this is safe to call before the console is up. */
+static void kprint(const char *s) {
+    serial_write(s);
+    console_write(s);
+}
+
 /* Print the buddy allocator's per-order free-list counts plus total free MiB,
  * under a caller-supplied label. Kept here (not in buddy.c) so the core-layer
  * allocator stays free of the serial dependency, exactly like the pmm. */
@@ -199,31 +210,30 @@ void kmain(void) {
     struct limine_framebuffer *fb =
         framebuffer_request.response->framebuffers[0];
 
-    const uint32_t colour = 0x00114422; /* solid sap green */
+    /* Bring up the on-screen text console over this framebuffer. It clears the
+     * screen to its background colour itself (so we no longer hand-fill pixels
+     * here) and parks a cursor at (0,0). pitch is BYTES per scanline; bpp is 32. */
+    console_init(fb->address, (uint32_t)fb->width, (uint32_t)fb->height,
+                 (uint32_t)fb->pitch, (uint16_t)fb->bpp);
 
-    /* Fill every pixel. We step rows by `pitch` (bytes per row, which may be
-     * wider than width*4 due to padding) and index pixels within a row. */
-    for (uint64_t y = 0; y < fb->height; y++) {
-        uint32_t *row = (uint32_t *)((uint8_t *)fb->address + y * fb->pitch);
-        for (uint64_t x = 0; x < fb->width; x++) {
-            row[x] = colour;
-        }
-    }
-
-    serial_write("Sap OS: framebuffer cleared\n");
+    /* The first thing the screen ever shows: the banner. After this, kprint()
+     * mirrors the boot milestones to both serial and screen. */
+    console_write("Sap OS\n");
+    console_write("framebuffer text console up - type and it echoes here\n\n");
+    serial_write("Sap OS: framebuffer console up\n");
 
     /* Bring up the x86_64 CPU tables (GDT, IDT, exception handlers, masked PIC,
      * and the hardware-IRQ gates). After this, exceptions are caught and dumped;
      * the IRQ path exists but every line is still masked and IF is still clear. */
     arch_init();
-    serial_write("Sap OS: arch initialised (GDT, IDT, PIC, IRQs)\n");
+    kprint("Sap OS: arch initialised (GDT, IDT, PIC, IRQs)\n");
 
     /* Install the device handlers BEFORE anything can fire. Order matters: if we
      * unmasked a line or ran `sti` first, an interrupt could arrive before its
      * handler existed and hit an empty gate. */
     timer_init(100);   /* PIT channel 0 at 100 Hz -> IRQ0 increments the tick */
     keyboard_init();   /* PS/2 keyboard            -> IRQ1 echoes keypresses  */
-    serial_write("Sap OS: timer + keyboard handlers installed\n");
+    kprint("Sap OS: timer + keyboard handlers installed\n");
 
     /* Bring up the physical frame allocator (Phase 3, step 3a). We do this while
      * interrupts are still masked so the summary and self-test below print as one
@@ -283,7 +293,7 @@ void kmain(void) {
      /* Now go live: unmask IRQ0/IRQ1 and `sti`. Strictly after the handlers are
      * in place (see above), so the first interrupt lands somewhere real. */
     arch_enable_irqs();
-    serial_write("Sap OS: interrupts enabled — idling, type to echo\n");
+    kprint("Sap OS: interrupts enabled - idling, type to echo\n");
 
     /* Stay alive and responsive. `hlt` sleeps the CPU until the next interrupt;
      * the handler runs, control returns here, and we `hlt` again — sleeping

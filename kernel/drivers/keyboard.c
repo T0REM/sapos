@@ -1,9 +1,10 @@
-/* keyboard.c — PS/2 keyboard: scancode -> ASCII, echoed over serial (IRQ1). */
+/* keyboard.c — PS/2 keyboard: scancode -> ASCII, echoed to screen + serial (IRQ1). */
 #include <stdint.h>
 #include "keyboard.h"
 #include "arch/x86_64/io.h"    /* inb — reading the scancode is port I/O (arch) */
 #include "arch/x86_64/irq.h"   /* irq_install_handler                           */
 #include "lib/serial.h"
+#include "drivers/console.h"   /* echo each keypress onto the framebuffer       */
 
 /* The PS/2 controller's data port. IRQ1 means "a byte is waiting here". */
 #define PS2_DATA 0x60
@@ -42,9 +43,14 @@ static void keyboard_irq(void) {
 
     char c = scancode_ascii[scancode];
     if (c != 0) {
-        /* Enter gives a bare '\n'; prepend '\r' so a terminal returns to column
-         * 0 instead of stair-stepping. (serial_putc, unlike serial_write, does
-         * no \n -> \r\n translation.) */
+        /* On screen: hand the raw character to the console. It interprets '\n',
+         * '\b' (visually erasing), '\t' and wraps/scrolls itself, so no '\r'
+         * fix-up is needed here — that's serial's quirk, not the console's. */
+        console_putc(c);
+
+        /* On serial (the headless/debug mirror): Enter gives a bare '\n', so
+         * prepend '\r' or a raw terminal stair-steps. (serial_putc, unlike
+         * serial_write, does no \n -> \r\n translation.) */
         if (c == '\n') {
             serial_putc('\r');
         }

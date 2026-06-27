@@ -89,6 +89,7 @@ SRCS := \
     kernel/arch/x86_64/pic.c \
     kernel/arch/x86_64/arch.c \
     kernel/arch/x86_64/paging.c \
+    kernel/drivers/console.c \
     kernel/drivers/timer.c \
     kernel/drivers/keyboard.c \
     kernel/core/mm/pmm.c \
