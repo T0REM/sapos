@@ -6,7 +6,7 @@ A custom x86_64 operating system kernel, written from scratch in C.
 Under heavy development. No releases will be made for a while.
 
 <p>
-  <img src="https://img.shields.io/github/downloads/T0REM/sapos/total?style=for-the-badge&logo=github&label=downloads&color=2b9348" alt="Downloads">
+  <img src="https://img.shields.io/github/stars/T0REM/sapos?style=for-the-badge&logo=github&label=stars&color=2b9348" alt="Stars">
   <img src="https://img.shields.io/badge/platform-x86__64-1e6fb8?style=for-the-badge&logo=qemu&logoColor=white" alt="Platform">
   <img src="https://img.shields.io/github/license/T0REM/sapos?style=for-the-badge&color=e07b00" alt="License">
 </p>
