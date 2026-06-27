@@ -93,7 +93,8 @@ SRCS := \
     kernel/drivers/keyboard.c \
     kernel/core/mm/pmm.c \
     kernel/core/mm/vmm.c \
-    kernel/core/mm/buddy.c
+    kernel/core/mm/buddy.c \
+    kernel/core/mm/slab.c
 
 # Standalone assembly sources (NASM). Named *_stubs to avoid colliding with the
 # C object of the same stem (isr.c -> isr.o).

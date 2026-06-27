@@ -20,12 +20,14 @@
 
 #include "limine.h"
 #include "lib/serial.h"
+#include "lib/string.h"
 #include "arch/x86_64/arch.h"
 #include "drivers/timer.h"
 #include "drivers/keyboard.h"
 #include "core/mm/pmm.h"
 #include "core/mm/vmm.h"
 #include "core/mm/buddy.h"
+#include "core/mm/slab.h"
 
 /* --- Limine request block -------------------------------------------------
  *
@@ -111,9 +113,8 @@ static void put_dec(uint64_t v) {
     while (i-- > 0) { serial_putc(buf[i]); }
 }
 
-/* Print a value as 0x-prefixed hex (handy for raw physical addresses). Marked
- * unused for now — kept for upcoming slab-allocator debugging. */
-static __attribute__((unused)) void put_hex(uint64_t v) {
+/* Print a value as 0x-prefixed hex (handy for raw pointers / addresses). */
+static void put_hex(uint64_t v) {
     serial_write("0x");
     char buf[16];
     int i = 0;
@@ -147,6 +148,30 @@ static void print_buddy_stats(const char *label) {
     serial_write("    total free: ");
     put_dec(total / (1024 * 1024));
     serial_write(" MiB\n");
+}
+
+/* Print the slab allocator's per-class accounting under a caller-supplied label.
+ * Kept here (not in slab.c) so the core-layer allocator stays free of the serial
+ * dependency, exactly like the pmm and buddy. */
+static void print_slab_stats(const char *label) {
+    struct slab_class_stats st[SLAB_NUM_CLASSES];
+    slab_get_stats(st);
+
+    serial_write(label);
+    serial_write("\n");
+    for (int i = 0; i < SLAB_NUM_CLASSES; i++) {
+        serial_write("    class ");
+        put_dec(st[i].obj_size);
+        serial_write("B: slabs ");
+        put_dec(st[i].slab_count);
+        serial_write(", slots ");
+        put_dec(st[i].total_slots);
+        serial_write(" (");
+        put_dec(st[i].free_slots);
+        serial_write(" free), in use ");
+        put_dec(st[i].bytes_in_use);
+        serial_write(" B\n");
+    }
 }
 
 /* --- Entry point ---------------------------------------------------------- */
@@ -247,6 +272,13 @@ void kmain(void) {
     serial_write("Sap OS: buddy up\n");
     print_buddy_stats("Sap OS: buddy free lists:");
 
+    /* Phase 3d: the slab allocator turns buddy pages into a kmalloc/kfree pool of
+     * small fixed-size objects. After this the memory subsystem is complete. It
+     * borrows its backing pages from the buddy (never the pmm directly) and needs
+     * the HHDM offset to turn those pages' physical addresses into pointers. */
+    slab_init(hhdm_request.response->offset);
+    serial_write("Sap OS: slab up\n");
+    print_slab_stats("Sap OS: slab caches (empty):");
 
      /* Now go live: unmask IRQ0/IRQ1 and `sti`. Strictly after the handlers are
      * in place (see above), so the first interrupt lands somewhere real. */
