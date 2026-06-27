@@ -1,14 +1,18 @@
-/* kernel.c — Sap OS entry point (Phase 1).
+/* kernel.c — Sap OS entry point (Phase 2).
  *
- * Phase 0 proved the pipeline: framebuffer + serial. Phase 1 adds the x86_64
- * CPU tables via the arch layer (GDT, IDT, exception handlers, masked PIC) so
- * the kernel stops triple-faulting and gains a crash dump.
+ * Phase 0 proved the pipeline (framebuffer + serial); Phase 1 added the x86_64
+ * CPU tables (GDT, IDT, exception handlers, masked PIC). Phase 2 brings the
+ * machine to life: it installs the PIT timer and PS/2 keyboard IRQ handlers,
+ * unmasks those two lines, and enables interrupts. The kernel then idles,
+ * waking on each interrupt instead of halting dead.
  *
- * This file is the core/entry layer, so it stays machine-agnostic: it hands the
- * CPU to the arch layer through the single arch_init() seam (ARCHITECTURE.md
- * §4) rather than touching GDT/IDT internals itself.
+ * This file is the core/entry layer, so it stays machine-agnostic: it drives
+ * the arch layer through named seams (arch_init, arch_enable_irqs) and the
+ * drivers through their init calls (ARCHITECTURE.md §4) rather than touching
+ * GDT/IDT/PIC internals itself.
  *
- * No memory manager, no scheduler, no hardware-interrupt handling yet. Later.
+ * No memory manager and no scheduler yet — the timer tick is the future basis
+ * for scheduling, but that is Phase 4. Here it only counts.
  */
 #include <stdint.h>
 #include <stddef.h>
@@ -17,6 +21,8 @@
 #include "limine.h"
 #include "lib/serial.h"
 #include "arch/x86_64/arch.h"
+#include "drivers/timer.h"
+#include "drivers/keyboard.h"
 
 /* --- Limine request block -------------------------------------------------
  *
@@ -98,13 +104,30 @@ void kmain(void) {
 
     serial_write("Sap OS: framebuffer cleared\n");
 
-    /* Bring up the x86_64 CPU tables (GDT, IDT, exception handlers, masked PIC).
-     * After this, exceptions are caught and dumped over serial. */
+    /* Bring up the x86_64 CPU tables (GDT, IDT, exception handlers, masked PIC,
+     * and the hardware-IRQ gates). After this, exceptions are caught and dumped;
+     * the IRQ path exists but every line is still masked and IF is still clear. */
     arch_init();
-    serial_write("Sap OS: arch initialised (GDT, IDT, PIC)\n");
+    serial_write("Sap OS: arch initialised (GDT, IDT, PIC, IRQs)\n");
 
+    /* Install the device handlers BEFORE anything can fire. Order matters: if we
+     * unmasked a line or ran `sti` first, an interrupt could arrive before its
+     * handler existed and hit an empty gate. */
+    timer_init(100);   /* PIT channel 0 at 100 Hz -> IRQ0 increments the tick */
+    keyboard_init();   /* PS/2 keyboard            -> IRQ1 echoes keypresses  */
+    serial_write("Sap OS: timer + keyboard handlers installed\n");
 
-    /* Not reached while the self-test is present (the #BP handler halts). Once
-     * the test line is removed, this is the normal end of Phase 1. */
-    hcf();
+    /* Now go live: unmask IRQ0/IRQ1 and `sti`. Strictly after the handlers are
+     * in place (see above), so the first interrupt lands somewhere real. */
+    arch_enable_irqs();
+    serial_write("Sap OS: interrupts enabled — idling, type to echo\n");
+
+    /* Stay alive and responsive. `hlt` sleeps the CPU until the next interrupt;
+     * the handler runs, control returns here, and we `hlt` again — sleeping
+     * between interrupts rather than busy-spinning or halting dead. We do NOT
+     * `cli` first (that is what hcf() does): IF must stay set so IRQs keep
+     * waking us. */
+    for (;;) {
+        __asm__ volatile ("hlt");
+    }
 }

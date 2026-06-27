@@ -9,8 +9,16 @@
 #define SAPOS_ARCH_X86_64_ARCH_H
 
 /* Set up the CPU tables: GDT, then IDT + exception handlers, then the remapped
- * (and fully masked) PIC. After this returns, CPU exceptions are caught and
- * dumped; hardware interrupts are remapped but masked. */
+ * (and fully masked) PIC, then the hardware-IRQ gates. After this returns, CPU
+ * exceptions are caught and dumped; the IRQ machinery is ready but every line is
+ * still masked and interrupts are still disabled. */
 void arch_init(void);
+
+/* Go live on interrupts: unmask IRQ0 (timer) and IRQ1 (keyboard), then `sti`.
+ * Call this LAST, only after the timer and keyboard handlers are installed, so
+ * the first interrupt lands in a real handler and not an empty gate. Unmasking a
+ * line and clearing the interrupt flag is x86/PIC state, so it lives here in the
+ * arch layer rather than in kmain. */
+void arch_enable_irqs(void);
 
 #endif /* SAPOS_ARCH_X86_64_ARCH_H */

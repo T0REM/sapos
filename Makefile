@@ -85,8 +85,11 @@ SRCS := \
     kernel/arch/x86_64/gdt.c \
     kernel/arch/x86_64/idt.c \
     kernel/arch/x86_64/isr.c \
+    kernel/arch/x86_64/irq.c \
     kernel/arch/x86_64/pic.c \
-    kernel/arch/x86_64/arch.c
+    kernel/arch/x86_64/arch.c \
+    kernel/drivers/timer.c \
+    kernel/drivers/keyboard.c
 
 # Standalone assembly sources (NASM). Named *_stubs to avoid colliding with the
 # C object of the same stem (isr.c -> isr.o).

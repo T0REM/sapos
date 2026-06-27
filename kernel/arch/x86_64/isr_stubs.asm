@@ -13,7 +13,8 @@
 
 bits 64
 
-extern isr_handler          ; the common C handler, in isr.c
+extern isr_handler          ; the common C handler for exceptions, in isr.c
+extern irq_dispatch         ; the common C dispatch for hardware IRQs, in irq.c
 
 section .text
 
@@ -69,6 +70,35 @@ ISR_ERR   29    ; #VC VMM communication     (error code)
 ISR_ERR   30    ; #SX Security exception    (error code)
 ISR_NOERR 31    ; (reserved)
 
+; ---- the 16 hardware IRQ vectors (32..47) ----------------------------------
+; Hardware IRQs never push a CPU error code, so — exactly like ISR_NOERR — each
+; stub pushes a dummy 0 into the error_code slot to keep the frame layout
+; identical to the exception path. The value pushed for the vector is the real
+; IDT vector (32..47); irq_dispatch subtracts 32 to recover the IRQ line number.
+%macro IRQ_STUB 1
+irq_stub_%1:
+    push qword 0           ; dummy error code (IRQs never have one)
+    push qword (32 + %1)   ; IDT vector number = 32 + IRQ line
+    jmp irq_common
+%endmacro
+
+IRQ_STUB 0      ; IRQ0  PIT timer        -> vector 32
+IRQ_STUB 1      ; IRQ1  PS/2 keyboard    -> vector 33
+IRQ_STUB 2      ; IRQ2  cascade (slave)  -> vector 34
+IRQ_STUB 3      ; IRQ3  COM2
+IRQ_STUB 4      ; IRQ4  COM1
+IRQ_STUB 5      ; IRQ5  LPT2 / sound
+IRQ_STUB 6      ; IRQ6  floppy
+IRQ_STUB 7      ; IRQ7  LPT1 / spurious
+IRQ_STUB 8      ; IRQ8  RTC
+IRQ_STUB 9      ; IRQ9
+IRQ_STUB 10     ; IRQ10
+IRQ_STUB 11     ; IRQ11
+IRQ_STUB 12     ; IRQ12 PS/2 mouse
+IRQ_STUB 13     ; IRQ13 FPU
+IRQ_STUB 14     ; IRQ14 primary ATA
+IRQ_STUB 15     ; IRQ15 secondary ATA
+
 ; ---- the shared tail -------------------------------------------------------
 isr_common:
     ; Save all 15 general-purpose registers. The PUSH ORDER is deliberate: the
@@ -102,12 +132,15 @@ isr_common:
     and rsp, -16            ; force 16-byte alignment (may waste up to 8 bytes)
     mov rdi, rbp            ; arg0 = &interrupt_frame
     call isr_handler
-    mov rsp, rbp            ; drop any alignment padding
 
-    ; --- epilogue ---
-    ; In Phase 1 isr_handler never returns (every exception halts), so the code
-    ; below is effectively dead today. It is written out in full anyway so the
-    ; exception path is complete and ready for later phases that DO resume.
+    ; --- shared epilogue ---
+    ; Both paths land here: the exception path falls through, and irq_common
+    ; (below) jumps here after dispatching. It restores the saved registers and
+    ; returns via iretq. For exceptions this is effectively dead today (every
+    ; exception halts), but for IRQs it is the live return path — we resume the
+    ; interrupted code once the handler and EOI are done.
+interrupt_return:
+    mov rsp, rbp            ; drop any alignment padding added before the C call
     pop rax
     pop rbx
     pop rcx
@@ -127,14 +160,55 @@ isr_common:
     add rsp, 16             ; discard the vector + error_code slots
     iretq                   ; pop rip,cs,rflags,rsp,ss and resume
 
-; ---- table the C side uses to wire up the IDT ------------------------------
-; A flat array of the 32 stub addresses, so idt.c can install them in a loop
-; instead of naming each extern by hand.
+; ---- the shared IRQ tail ---------------------------------------------------
+; Mirrors isr_common's prologue exactly — same 15-register save, same
+; interrupt_frame layout, same 16-byte alignment for the SysV call — but it
+; dispatches to irq_dispatch instead of isr_handler. irq_dispatch runs the
+; device handler AND sends the PIC EOI. We then rejoin interrupt_return to
+; restore registers and iretq back into the interrupted code. Kept as its own
+; entry only because the C function it calls differs.
+irq_common:
+    push r15
+    push r14
+    push r13
+    push r12
+    push r11
+    push r10
+    push r9
+    push r8
+    push rbp
+    push rdi
+    push rsi
+    push rdx
+    push rcx
+    push rbx
+    push rax
+
+    cld                     ; SysV ABI requires DF=0 on entry to C code
+
+    mov rbp, rsp            ; rbp = &interrupt_frame (survives the call; restored)
+    and rsp, -16            ; force 16-byte stack alignment for the SysV ABI
+    mov rdi, rbp            ; arg0 = &interrupt_frame
+    call irq_dispatch
+    jmp interrupt_return    ; shared restore + iretq
+
+; ---- tables the C side uses to wire up the IDT -----------------------------
+; Flat arrays of stub addresses, so the C side can install them in a loop
+; instead of naming each extern by hand: 32 exception stubs for isr.c, then the
+; 16 IRQ stubs for irq.c.
 section .rodata
 global isr_stub_table
 isr_stub_table:
 %assign i 0
 %rep 32
     dq isr_stub_ %+ i
+%assign i i+1
+%endrep
+
+global irq_stub_table
+irq_stub_table:
+%assign i 0
+%rep 16
+    dq irq_stub_ %+ i
 %assign i i+1
 %endrep
