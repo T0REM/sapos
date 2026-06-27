@@ -1,10 +1,14 @@
-/* kernel.c — Sap OS entry point (Phase 0).
+/* kernel.c — Sap OS entry point (Phase 1).
  *
- * Goal of this phase: prove the whole pipeline boots. We ask Limine for a
- * framebuffer, paint the screen one solid colour (visual proof we ran), and
- * print a line over COM1 serial (textual proof we ran). Then we halt forever.
+ * Phase 0 proved the pipeline: framebuffer + serial. Phase 1 adds the x86_64
+ * CPU tables via the arch layer (GDT, IDT, exception handlers, masked PIC) so
+ * the kernel stops triple-faulting and gains a crash dump.
  *
- * No memory manager, no GDT/IDT, no scheduler. Those are later phases.
+ * This file is the core/entry layer, so it stays machine-agnostic: it hands the
+ * CPU to the arch layer through the single arch_init() seam (ARCHITECTURE.md
+ * §4) rather than touching GDT/IDT internals itself.
+ *
+ * No memory manager, no scheduler, no hardware-interrupt handling yet. Later.
  */
 #include <stdint.h>
 #include <stddef.h>
@@ -12,6 +16,7 @@
 
 #include "limine.h"
 #include "lib/serial.h"
+#include "arch/x86_64/arch.h"
 
 /* --- Limine request block -------------------------------------------------
  *
@@ -93,6 +98,13 @@ void kmain(void) {
 
     serial_write("Sap OS: framebuffer cleared\n");
 
-    /* Phase 0 ends here. Nothing else to do yet — halt. */
+    /* Bring up the x86_64 CPU tables (GDT, IDT, exception handlers, masked PIC).
+     * After this, exceptions are caught and dumped over serial. */
+    arch_init();
+    serial_write("Sap OS: arch initialised (GDT, IDT, PIC)\n");
+
+
+    /* Not reached while the self-test is present (the #BP handler halts). Once
+     * the test line is removed, this is the normal end of Phase 1. */
     hcf();
 }

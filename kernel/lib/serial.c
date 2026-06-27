@@ -1,29 +1,18 @@
 /* serial.c — COM1 16550 UART driver.
  *
- * NOTE ON LAYERING: inb/outb are x86-specific port-I/O instructions. Per the
- * architecture doc's cardinal rule, machine-specific primitives ultimately
- * belong in the arch layer (kernel/arch/x86_64/). Phase 0 has no arch layer
- * yet, so they live here as static inlines. When Phase 1 introduces the arch
- * layer, these move there and this driver calls them through it.
+ * LAYERING: inb/outb are x86-specific port-I/O instructions. Per the
+ * architecture doc's cardinal rule (§4), machine-specific primitives live in
+ * the arch layer. As of Phase 1 that layer exists, so this driver pulls them
+ * from kernel/arch/x86_64/io.h instead of defining its own (where they sat
+ * temporarily in Phase 0).
  */
 #include <stdint.h>
 #include "serial.h"
+#include "arch/x86_64/io.h"
 
 /* COM1's base I/O port. The 16550 UART exposes 8 consecutive registers from
  * here; we address them as COM1 + offset. */
 #define COM1 0x3F8
-
-/* Write one byte to an x86 I/O port. */
-static inline void outb(uint16_t port, uint8_t value) {
-    __asm__ volatile ("outb %0, %1" : : "a"(value), "Nd"(port));
-}
-
-/* Read one byte from an x86 I/O port. */
-static inline uint8_t inb(uint16_t port) {
-    uint8_t value;
-    __asm__ volatile ("inb %1, %0" : "=a"(value) : "Nd"(port));
-    return value;
-}
 
 void serial_init(void) {
     outb(COM1 + 1, 0x00); /* Disable all UART interrupts (we poll). */

@@ -21,6 +21,9 @@ LIMINE_PROTO_COMMIT := 80ef54bed402b8c0b672a707c1df4c532f3428ad
 # ----------------------------------------------------------------------------
 CC := clang
 LD := ld.lld
+# NASM assembles the standalone .asm in the arch layer (the ISR stubs). Per
+# ARCHITECTURE.md §7, NASM is our assembler for standalone asm.
+AS := nasm
 
 # Compiler flags. These encode the architecture doc's mandate: clang targeting
 # x86_64-elf, freestanding, no red zone, no SSE/MMX, higher-half (kernel code
@@ -46,6 +49,10 @@ CFLAGS := \
     -ffunction-sections -fdata-sections \
     -Wall -Wextra -std=gnu11 -O2 -g \
     -I kernel
+
+# NASM flags: emit 64-bit ELF objects with DWARF debug info so addresses in a
+# crash dump can be mapped back to source.
+ASMFLAGS := -f elf64 -g -F dwarf
 
 # Linker flags:
 #   -m elf_x86_64        output an x86-64 ELF
@@ -74,10 +81,21 @@ ISO := sapos.iso
 SRCS := \
     kernel/kernel.c \
     kernel/lib/serial.c \
-    kernel/lib/string.c
+    kernel/lib/string.c \
+    kernel/arch/x86_64/gdt.c \
+    kernel/arch/x86_64/idt.c \
+    kernel/arch/x86_64/isr.c \
+    kernel/arch/x86_64/pic.c \
+    kernel/arch/x86_64/arch.c
+
+# Standalone assembly sources (NASM). Named *_stubs to avoid colliding with the
+# C object of the same stem (isr.c -> isr.o).
+ASMSRCS := \
+    kernel/arch/x86_64/isr_stubs.asm
 
 # Mirror each source to build/<path>.o
 OBJS := $(patsubst %.c,$(BUILD)/%.o,$(SRCS))
+ASMOBJS := $(patsubst %.asm,$(BUILD)/%.o,$(ASMSRCS))
 
 # Vendored bits fetched by this Makefile.
 LIMINE_DIR := limine
@@ -113,9 +131,13 @@ $(BUILD)/%.o: %.c $(LIMINE_HEADER)
 	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(KERNEL_ELF): $(OBJS) linker.ld
+$(BUILD)/%.o: %.asm
 	mkdir -p $(dir $@)
-	$(LD) $(LDFLAGS) $(OBJS) -o $@
+	$(AS) $(ASMFLAGS) $< -o $@
+
+$(KERNEL_ELF): $(OBJS) $(ASMOBJS) linker.ld
+	mkdir -p $(dir $@)
+	$(LD) $(LDFLAGS) $(OBJS) $(ASMOBJS) -o $@
 
 # ----------------------------------------------------------------------------
 # Stage the ISO tree and build a hybrid BIOS+UEFI bootable ISO
