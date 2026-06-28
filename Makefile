@@ -95,12 +95,14 @@ SRCS := \
     kernel/core/mm/pmm.c \
     kernel/core/mm/vmm.c \
     kernel/core/mm/buddy.c \
-    kernel/core/mm/slab.c
+    kernel/core/mm/slab.c \
+    kernel/core/sched/sched.c
 
 # Standalone assembly sources (NASM). Named *_stubs to avoid colliding with the
 # C object of the same stem (isr.c -> isr.o).
 ASMSRCS := \
-    kernel/arch/x86_64/isr_stubs.asm
+    kernel/arch/x86_64/isr_stubs.asm \
+    kernel/arch/x86_64/context.asm
 
 # Mirror each source to build/<path>.o
 OBJS := $(patsubst %.c,$(BUILD)/%.o,$(SRCS))
