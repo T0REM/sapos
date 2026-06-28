@@ -12,8 +12,8 @@
  * (the PML4 frame). We pass it around as a uint64_t so the core layer needs no
  * x86 struct — it gets one opaque handle from the VMM and hands it back.
  */
-#ifndef SAPOS_ARCH_X86_64_PAGING_H
-#define SAPOS_ARCH_X86_64_PAGING_H
+#ifndef SCRAPOS_ARCH_X86_64_PAGING_H
+#define SCRAPOS_ARCH_X86_64_PAGING_H
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -64,4 +64,4 @@ uint64_t paging_read_cr2(void);
  * this check lives here in the arch layer rather than in the core VMM. */
 bool paging_can_switch_to(uint64_t pml4_phys);
 
-#endif /* SAPOS_ARCH_X86_64_PAGING_H */
+#endif /* SCRAPOS_ARCH_X86_64_PAGING_H */

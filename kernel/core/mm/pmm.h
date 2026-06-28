@@ -10,8 +10,8 @@
  * there never should be. The one machine-ish input — the HHDM offset and the
  * memory map — arrives as plain data from the boot layer, not as a CPU operation.
  */
-#ifndef SAPOS_CORE_MM_PMM_H
-#define SAPOS_CORE_MM_PMM_H
+#ifndef SCRAPOS_CORE_MM_PMM_H
+#define SCRAPOS_CORE_MM_PMM_H
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -49,4 +49,4 @@ bool pmm_claim_frame(uint64_t phys);
  *   free  — usable frames available right now */
 void pmm_get_stats(uint64_t *total, uint64_t *used, uint64_t *free);
 
-#endif /* SAPOS_CORE_MM_PMM_H */
+#endif /* SCRAPOS_CORE_MM_PMM_H */

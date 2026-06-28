@@ -18,8 +18,8 @@
  * never own the same frame — buddy_init() claims each frame it manages out of the
  * pmm (marking it used there) so the pmm can never re-hand it. See buddy.c.
  */
-#ifndef SAPOS_CORE_MM_BUDDY_H
-#define SAPOS_CORE_MM_BUDDY_H
+#ifndef SCRAPOS_CORE_MM_BUDDY_H
+#define SCRAPOS_CORE_MM_BUDDY_H
 
 #include <stdint.h>
 #include "limine.h"
@@ -56,4 +56,4 @@ void buddy_free(uint64_t phys, unsigned order);
  *   total_free_bytes — sum of all free blocks' sizes. */
 void buddy_get_stats(uint64_t *counts, uint64_t *total_free_bytes);
 
-#endif /* SAPOS_CORE_MM_BUDDY_H */
+#endif /* SCRAPOS_CORE_MM_BUDDY_H */

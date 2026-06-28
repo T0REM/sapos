@@ -1,4 +1,4 @@
-/* kernel.c — Sap OS entry point (Phase 2).
+/* kernel.c — ScrapOS entry point (Phase 2).
  *
  * Phase 0 proved the pipeline (framebuffer + serial); Phase 1 added the x86_64
  * CPU tables (GDT, IDT, exception handlers, masked PIC). Phase 2 brings the
@@ -191,7 +191,7 @@ void kmain(void) {
     /* Serial first, so we have a debug channel even if the framebuffer is
      * missing or the screen stays black. */
     serial_init();
-    serial_write("Sap OS booted\n");
+    serial_write("ScrapOS booted\n");
 
     /* Bail (loudly, over serial) if the bootloader couldn't honour our
      * protocol revision or didn't give us a framebuffer. */
@@ -218,22 +218,22 @@ void kmain(void) {
 
     /* The first thing the screen ever shows: the banner. After this, kprint()
      * mirrors the boot milestones to both serial and screen. */
-    console_write("Sap OS\n");
+    console_write("ScrapOS\n");
     console_write("framebuffer text console up - type and it echoes here\n\n");
-    serial_write("Sap OS: framebuffer console up\n");
+    serial_write("ScrapOS: framebuffer console up\n");
 
     /* Bring up the x86_64 CPU tables (GDT, IDT, exception handlers, masked PIC,
      * and the hardware-IRQ gates). After this, exceptions are caught and dumped;
      * the IRQ path exists but every line is still masked and IF is still clear. */
     arch_init();
-    kprint("Sap OS: arch initialised (GDT, IDT, PIC, IRQs)\n");
+    kprint("ScrapOS: arch initialised (GDT, IDT, PIC, IRQs)\n");
 
     /* Install the device handlers BEFORE anything can fire. Order matters: if we
      * unmasked a line or ran `sti` first, an interrupt could arrive before its
      * handler existed and hit an empty gate. */
     timer_init(100);   /* PIT channel 0 at 100 Hz -> IRQ0 increments the tick */
     keyboard_init();   /* PS/2 keyboard            -> IRQ1 echoes keypresses  */
-    kprint("Sap OS: timer + keyboard handlers installed\n");
+    kprint("ScrapOS: timer + keyboard handlers installed\n");
 
     /* Bring up the physical frame allocator (Phase 3, step 3a). We do this while
      * interrupts are still masked so the summary and self-test below print as one
@@ -252,7 +252,7 @@ void kmain(void) {
     /* Memory summary. usable frames * 4 KiB / 1 MiB gives MiB of usable RAM. */
     uint64_t total, used, free;
     pmm_get_stats(&total, &used, &free);
-    serial_write("Sap OS: pmm up — usable ");
+    serial_write("ScrapOS: pmm up — usable ");
     put_dec(total * PMM_FRAME_SIZE / (1024 * 1024));
     serial_write(" MiB (");
     put_dec(total);
@@ -279,21 +279,21 @@ void kmain(void) {
     buddy_init(memmap_request.response,
                hhdm_request.response->offset,
                BUDDY_PMM_RESERVE_FRAMES);
-    serial_write("Sap OS: buddy up\n");
-    print_buddy_stats("Sap OS: buddy free lists:");
+    serial_write("ScrapOS: buddy up\n");
+    print_buddy_stats("ScrapOS: buddy free lists:");
 
     /* Phase 3d: the slab allocator turns buddy pages into a kmalloc/kfree pool of
      * small fixed-size objects. After this the memory subsystem is complete. It
      * borrows its backing pages from the buddy (never the pmm directly) and needs
      * the HHDM offset to turn those pages' physical addresses into pointers. */
     slab_init(hhdm_request.response->offset);
-    serial_write("Sap OS: slab up\n");
-    print_slab_stats("Sap OS: slab caches (empty):");
+    serial_write("ScrapOS: slab up\n");
+    print_slab_stats("ScrapOS: slab caches (empty):");
 
      /* Now go live: unmask IRQ0/IRQ1 and `sti`. Strictly after the handlers are
      * in place (see above), so the first interrupt lands somewhere real. */
     arch_enable_irqs();
-    kprint("Sap OS: interrupts enabled - idling, type to echo\n");
+    kprint("ScrapOS: interrupts enabled - idling, type to echo\n");
 
     /* Stay alive and responsive. `hlt` sleeps the CPU until the next interrupt;
      * the handler runs, control returns here, and we `hlt` again — sleeping

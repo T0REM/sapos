@@ -8,8 +8,8 @@
  * 128 glyphs of 8 bytes each (8 x 8, MSB-first rows).
  * console.c parses this header at runtime; nothing here is hard-coded there.
  */
-#ifndef SAPOS_DRIVERS_FONT_PSF_H
-#define SAPOS_DRIVERS_FONT_PSF_H
+#ifndef SCRAPOS_DRIVERS_FONT_PSF_H
+#define SCRAPOS_DRIVERS_FONT_PSF_H
 
 static const unsigned char font_psf[1056] = {
     0x72, 0xb5, 0x4a, 0x86, 0x00, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00,
@@ -102,4 +102,4 @@ static const unsigned char font_psf[1056] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
 
-#endif /* SAPOS_DRIVERS_FONT_PSF_H */
+#endif /* SCRAPOS_DRIVERS_FONT_PSF_H */

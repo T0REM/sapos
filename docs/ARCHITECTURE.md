@@ -1,9 +1,9 @@
-# Sap OS — Architecture
+# ScrapOS — Architecture
 
 > A custom x86_64 kernel and operating system, built from the ground up in C.
 > Not a Linux skin, not a Unix clone. Its own thing.
 
-This document is the source of truth for how Sap OS is structured and why.
+This document is the source of truth for how ScrapOS is structured and why.
 Read it before adding anything. If a change fights the rules here, the change
 is probably wrong, or the rules need a deliberate update. Either way, decide on
 purpose, not by accident.
@@ -12,7 +12,7 @@ purpose, not by accident.
 
 ## 1. Philosophy
 
-Sap OS exists to be built, not to compete or ship. That gives us freedom:
+ScrapOS exists to be built, not to compete or ship. That gives us freedom:
 no users to support, no roadmap pressure, no backwards compatibility. We make
 the calls we find interesting and we own every line.
 
@@ -61,7 +61,7 @@ context switching, page-table manipulation, CPU control. Everything here knows
 it's on x86. Nothing above here is allowed to.
 
 ### Core layer  (`kernel/core/`)
-The architecture-independent heart. This is where Sap OS's personality lives:
+The architecture-independent heart. This is where ScrapOS's personality lives:
 the memory managers, the heap, the scheduler, task and process management. The
 scheduler must never know what CPU it's running on. It asks the arch layer to
 switch context; it does not know how that happens.
@@ -86,7 +86,7 @@ between them.
 
 Most hobby kernels rot for exactly one reason: everything reaches into
 everything, and within weeks you can't change one thing without breaking five.
-This rule is what keeps Sap OS extensible for months instead of collapsing in
+This rule is what keeps ScrapOS extensible for months instead of collapsing in
 week three. If we ever wanted a second architecture (ARM, RISC-V), only the
 arch layer would change. We probably never will, but designing as if we might
 is what keeps the seams honest.
@@ -96,7 +96,7 @@ is what keeps the seams honest.
 ## 5. Directory structure
 
 ```
-sapos/
+scrapos/
 ├── boot/                  Limine config and boot assets
 ├── kernel/
 │   ├── arch/x86_64/        GDT, IDT, interrupts, paging asm, context switch
@@ -148,7 +148,7 @@ top allocates from nothing and corrupts instantly.
 - **Emulator:** QEMU (`qemu-system-x86_64`), serial wired to stdio for debugging.
 - **Build:** Make, producing a kernel ELF, then a bootable ISO via xorriso.
 - **Dev environment:** WSL2 (Ubuntu) on Windows. All work inside the Linux
-  filesystem (`~/sapos`), never on `/mnt/c/`. WSLg provides the QEMU window.
+  filesystem (`~/scrapos`), never on `/mnt/c/`. WSLg provides the QEMU window.
 
 ---
 

@@ -15,8 +15,8 @@
  * from buddy_alloc() and goes back via buddy_free() (see slab.c). The buddy owns
  * the pages; the slab only subdivides the ones it has borrowed.
  */
-#ifndef SAPOS_CORE_MM_SLAB_H
-#define SAPOS_CORE_MM_SLAB_H
+#ifndef SCRAPOS_CORE_MM_SLAB_H
+#define SCRAPOS_CORE_MM_SLAB_H
 
 #include <stddef.h>
 #include <stdint.h>
@@ -58,4 +58,4 @@ struct slab_class_stats {
 /* Fill `out`, an array of length SLAB_NUM_CLASSES, with each class's stats. */
 void slab_get_stats(struct slab_class_stats *out);
 
-#endif /* SAPOS_CORE_MM_SLAB_H */
+#endif /* SCRAPOS_CORE_MM_SLAB_H */

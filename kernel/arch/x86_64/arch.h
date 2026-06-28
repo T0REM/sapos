@@ -5,8 +5,8 @@
  * lets the arch layer decide the order. That keeps the seam between core and
  * arch narrow and honest.
  */
-#ifndef SAPOS_ARCH_X86_64_ARCH_H
-#define SAPOS_ARCH_X86_64_ARCH_H
+#ifndef SCRAPOS_ARCH_X86_64_ARCH_H
+#define SCRAPOS_ARCH_X86_64_ARCH_H
 
 /* Set up the CPU tables: GDT, then IDT + exception handlers, then the remapped
  * (and fully masked) PIC, then the hardware-IRQ gates. After this returns, CPU
@@ -21,4 +21,4 @@ void arch_init(void);
  * arch layer rather than in kmain. */
 void arch_enable_irqs(void);
 
-#endif /* SAPOS_ARCH_X86_64_ARCH_H */
+#endif /* SCRAPOS_ARCH_X86_64_ARCH_H */

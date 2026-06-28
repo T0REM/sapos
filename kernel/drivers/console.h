@@ -12,8 +12,8 @@
  * this is the on-screen channel. A kprint helper in kernel.c fans status text
  * out to both.
  */
-#ifndef SAPOS_DRIVERS_CONSOLE_H
-#define SAPOS_DRIVERS_CONSOLE_H
+#ifndef SCRAPOS_DRIVERS_CONSOLE_H
+#define SCRAPOS_DRIVERS_CONSOLE_H
 
 #include <stdint.h>
 
@@ -32,4 +32,4 @@ void console_putc(char c);
 /* console_putc over a NUL-terminated string. */
 void console_write(const char *s);
 
-#endif /* SAPOS_DRIVERS_CONSOLE_H */
+#endif /* SCRAPOS_DRIVERS_CONSOLE_H */

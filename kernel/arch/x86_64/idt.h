@@ -5,8 +5,8 @@
  * and jumps to its offset. We build the table and expose a clean way to install
  * one gate at a time.
  */
-#ifndef SAPOS_ARCH_X86_64_IDT_H
-#define SAPOS_ARCH_X86_64_IDT_H
+#ifndef SCRAPOS_ARCH_X86_64_IDT_H
+#define SCRAPOS_ARCH_X86_64_IDT_H
 
 #include <stdint.h>
 
@@ -25,4 +25,4 @@ void idt_init(void);
  * handler's code segment is always the kernel code selector. */
 void idt_set_gate(uint8_t vector, void *handler, uint8_t flags);
 
-#endif /* SAPOS_ARCH_X86_64_IDT_H */
+#endif /* SCRAPOS_ARCH_X86_64_IDT_H */

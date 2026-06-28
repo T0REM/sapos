@@ -3,8 +3,8 @@
  * Phase 0's only debug channel. QEMU is launched with COM1 wired to stdio, so
  * anything we write here lands in the terminal that ran `make run`.
  */
-#ifndef SAPOS_LIB_SERIAL_H
-#define SAPOS_LIB_SERIAL_H
+#ifndef SCRAPOS_LIB_SERIAL_H
+#define SCRAPOS_LIB_SERIAL_H
 
 /* Initialise the COM1 UART (baud, line format, FIFO). Call once at boot. */
 void serial_init(void);
@@ -16,4 +16,4 @@ void serial_putc(char c);
  * output looks right in a normal terminal. */
 void serial_write(const char *s);
 
-#endif /* SAPOS_LIB_SERIAL_H */
+#endif /* SCRAPOS_LIB_SERIAL_H */

@@ -10,8 +10,8 @@
  * single instruction — inlining it avoids a function call per byte in tight
  * loops like the serial transmit poll.
  */
-#ifndef SAPOS_ARCH_X86_64_IO_H
-#define SAPOS_ARCH_X86_64_IO_H
+#ifndef SCRAPOS_ARCH_X86_64_IO_H
+#define SCRAPOS_ARCH_X86_64_IO_H
 
 #include <stdint.h>
 
@@ -36,4 +36,4 @@ static inline void io_wait(void) {
     __asm__ volatile ("outb %%al, $0x80" : : "a"((uint8_t)0));
 }
 
-#endif /* SAPOS_ARCH_X86_64_IO_H */
+#endif /* SCRAPOS_ARCH_X86_64_IO_H */

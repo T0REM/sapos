@@ -9,8 +9,8 @@
  * CPU onto it. The buddy allocator (3c) and slab (3d) come later and sit above
  * this; nothing here knows about them.
  */
-#ifndef SAPOS_CORE_MM_VMM_H
-#define SAPOS_CORE_MM_VMM_H
+#ifndef SCRAPOS_CORE_MM_VMM_H
+#define SCRAPOS_CORE_MM_VMM_H
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -40,4 +40,4 @@ bool vmm_map(uint64_t virt, uint64_t phys, uint64_t flags);
 bool vmm_unmap(uint64_t virt);
 bool vmm_translate(uint64_t virt, uint64_t *out_phys);
 
-#endif /* SAPOS_CORE_MM_VMM_H */
+#endif /* SCRAPOS_CORE_MM_VMM_H */

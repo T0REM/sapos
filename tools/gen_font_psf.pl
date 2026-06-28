@@ -91,8 +91,8 @@ print <<"HDR";
  * $LENGTH glyphs of $CHARSIZE bytes each ($WIDTH x $HEIGHT, MSB-first rows).
  * console.c parses this header at runtime; nothing here is hard-coded there.
  */
-#ifndef SAPOS_DRIVERS_FONT_PSF_H
-#define SAPOS_DRIVERS_FONT_PSF_H
+#ifndef SCRAPOS_DRIVERS_FONT_PSF_H
+#define SCRAPOS_DRIVERS_FONT_PSF_H
 
 static const unsigned char font_psf[$total] = {
 HDR
@@ -106,5 +106,5 @@ for (my $i = 0; $i < $total; $i += 12) {
 print <<"FTR";
 };
 
-#endif /* SAPOS_DRIVERS_FONT_PSF_H */
+#endif /* SCRAPOS_DRIVERS_FONT_PSF_H */
 FTR

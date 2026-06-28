@@ -8,8 +8,8 @@
  * This is the arch seam for interrupts: drivers register a plain callback for
  * their IRQ line and never touch the IDT, the PIC, or the EOI themselves.
  */
-#ifndef SAPOS_ARCH_X86_64_IRQ_H
-#define SAPOS_ARCH_X86_64_IRQ_H
+#ifndef SCRAPOS_ARCH_X86_64_IRQ_H
+#define SCRAPOS_ARCH_X86_64_IRQ_H
 
 #include <stdint.h>
 
@@ -27,4 +27,4 @@ void irq_init(void);
  * registration. Call before the line is unmasked. */
 void irq_install_handler(uint8_t irq, irq_handler_t handler);
 
-#endif /* SAPOS_ARCH_X86_64_IRQ_H */
+#endif /* SCRAPOS_ARCH_X86_64_IRQ_H */

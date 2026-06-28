@@ -1,6 +1,6 @@
 /* pic.h — the legacy 8259A Programmable Interrupt Controller. */
-#ifndef SAPOS_ARCH_X86_64_PIC_H
-#define SAPOS_ARCH_X86_64_PIC_H
+#ifndef SCRAPOS_ARCH_X86_64_PIC_H
+#define SCRAPOS_ARCH_X86_64_PIC_H
 
 #include <stdint.h>
 
@@ -20,4 +20,4 @@ void pic_send_eoi(uint8_t irq);
 /* Clear the mask bit for IRQ line `irq` (0..15), letting that line through. */
 void pic_unmask_irq(uint8_t irq);
 
-#endif /* SAPOS_ARCH_X86_64_PIC_H */
+#endif /* SCRAPOS_ARCH_X86_64_PIC_H */

@@ -1,6 +1,6 @@
-# Makefile — Sap OS build pipeline (Phase 0).
+# Makefile — ScrapOS build pipeline (Phase 0).
 #
-# Flow:  *.c --clang--> *.o --ld.lld--> kernel.elf --xorriso--> sapos.iso --qemu
+# Flow:  *.c --clang--> *.o --ld.lld--> kernel.elf --xorriso--> scrapos.iso --qemu
 #
 # Targets:
 #   make            build the bootable ISO (default)
@@ -75,7 +75,7 @@ LDFLAGS := \
 # ----------------------------------------------------------------------------
 BUILD := build
 KERNEL_ELF := $(BUILD)/kernel.elf
-ISO := sapos.iso
+ISO := scrapos.iso
 
 # All kernel C sources. Add new files here as the kernel grows.
 SRCS := \

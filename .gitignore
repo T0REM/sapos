@@ -1,6 +1,6 @@
 # Build outputs
 /build/
-/sapos.iso
+/scrapos.iso
 
 # Vendored / downloaded by `make` (re-fetched on demand)
 /limine/

@@ -117,7 +117,7 @@ void vmm_init(struct limine_executable_address_response *kaddr,
      *    and rsp stay mapped across this exact moment. */
     paging_load_cr3(kernel_pml4);
 
-    serial_write("Sap OS: now running on our own page tables\n");
+    serial_write("ScrapOS: now running on our own page tables\n");
 }
 
 bool vmm_map(uint64_t virt, uint64_t phys, uint64_t flags) {

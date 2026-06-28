@@ -5,8 +5,8 @@
  * handler). It never reaches up. In Phase 2 the only job is counting ticks; the
  * tick is the future basis for preemptive scheduling, but that is a later phase.
  */
-#ifndef SAPOS_DRIVERS_TIMER_H
-#define SAPOS_DRIVERS_TIMER_H
+#ifndef SCRAPOS_DRIVERS_TIMER_H
+#define SCRAPOS_DRIVERS_TIMER_H
 
 #include <stdint.h>
 
@@ -18,4 +18,4 @@ void timer_init(uint32_t frequency);
 /* Monotonic tick count since timer_init(): one tick per IRQ0. */
 uint64_t timer_ticks(void);
 
-#endif /* SAPOS_DRIVERS_TIMER_H */
+#endif /* SCRAPOS_DRIVERS_TIMER_H */

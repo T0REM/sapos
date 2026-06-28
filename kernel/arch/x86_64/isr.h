@@ -1,6 +1,6 @@
 /* isr.h — exception frame layout + the common C handler entry. */
-#ifndef SAPOS_ARCH_X86_64_ISR_H
-#define SAPOS_ARCH_X86_64_ISR_H
+#ifndef SCRAPOS_ARCH_X86_64_ISR_H
+#define SCRAPOS_ARCH_X86_64_ISR_H
 
 #include <stdint.h>
 
@@ -30,4 +30,4 @@ void isr_init(void);
  * isr.asm with a pointer to the frame above. */
 void isr_handler(struct interrupt_frame *frame);
 
-#endif /* SAPOS_ARCH_X86_64_ISR_H */
+#endif /* SCRAPOS_ARCH_X86_64_ISR_H */

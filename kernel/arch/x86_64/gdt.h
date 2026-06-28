@@ -5,8 +5,8 @@
  * 64-bit code segment, because the CS selector's descriptor is what tells the
  * CPU "run in long mode, ring 0". So this is a minimal flat GDT.
  */
-#ifndef SAPOS_ARCH_X86_64_GDT_H
-#define SAPOS_ARCH_X86_64_GDT_H
+#ifndef SCRAPOS_ARCH_X86_64_GDT_H
+#define SCRAPOS_ARCH_X86_64_GDT_H
 
 /* Segment selectors = byte offset of the descriptor in the table. With the
  * null descriptor at index 0, kernel code is at index 1 (offset 0x08) and
@@ -19,4 +19,4 @@
 /* Build the GDT, load it with lgdt, and reload every segment register. */
 void gdt_init(void);
 
-#endif /* SAPOS_ARCH_X86_64_GDT_H */
+#endif /* SCRAPOS_ARCH_X86_64_GDT_H */

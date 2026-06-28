@@ -1,4 +1,4 @@
-/* linker.ld — higher-half link layout for the Sap OS kernel.
+/* linker.ld — higher-half link layout for the ScrapOS kernel.
  *
  * Limine loads us as an ordinary ELF64 executable and jumps to our ELF entry
  * point. We tell the linker to lay the kernel out in the topmost 2 GiB of the
