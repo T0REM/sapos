@@ -1,6 +1,6 @@
 <div align="center">
 
-# Sap OS
+# Scrap OS
 
 A custom x86_64 operating system kernel, written from scratch in C.
 Under heavy development. No releases will be made for a while.
