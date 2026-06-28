@@ -54,7 +54,7 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the design.
 
 ScrapOS is built with AI assistance (Claude) used as a learning tool. The original goal was to improve my knowledge of systems and low level programming. Every subsystem is reviewed, debugged, and understood rather than blindly generated. The AI plans and pair programs, leaving me to drive, test, and learn how each piece actually works.
 
-There's no point trying to claim credit for this. It's here to learn and understand.
+There's no point trying to claim credit for this. It's here for me to learn and understand.
 
 ## License
 
